@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# -d check if a valid dir, -p check if the parent dir exist if not it creates the dir, -p prompt
-# -f force - file check in the if, column <- text format makes it column based, -t auto align text like table structer, -s sperates with comma, -rf recrusive force.
-
 # Create databases directory if it doesn't exist
 mkdir -p databases
 
@@ -55,8 +52,8 @@ while true; do
                         1)
                             read -p "Enter table name: " tablename
                             read -p "Enter columns (comma-separated): " columns
-                            echo "Enter one of the Available datatypes: int, string, float, boolean"
-                            read -p "Enter datatypes (comma-separated): " datatypes
+                            echo "Enter one of the Available datatypes: int, string, float, date"
+                            read -p "datatypes (comma-separated): " datatypes
                             read -p "Enter primary key column: " pk
                             echo "$columns" > "databases/$dbname/$tablename"
                             echo "$datatypes" >> "databases/$dbname/$tablename"
@@ -79,13 +76,18 @@ while true; do
                         4)
                             read -p "Enter table name: " tablename
                             if [ -f "databases/$dbname/$tablename" ]; then
-                                read -p "Enter values (comma-separated): " values
-                                echo "$values" >> "databases/$dbname/$tablename"
-                                echo "Row inserted into '$tablename'."
+                            # Read the primary key from line 3 of the table file
+                            pk=$(sed -n '3p' "databases/$dbname/$tablename")
+                            echo "This is your primary key: $pk — be sure you add it in the correct place."
+
+                            read -p "Enter values (comma-separated): " values
+                            echo "$values" >> "databases/$dbname/$tablename"
+                            echo "Row inserted into '$tablename'."
                             else
-                                echo "Table '$tablename' does not exist."
+                            echo "Table '$tablename' does not exist."
                             fi
                             ;;
+
                         5)
                             read -p "Enter table name: " tablename
                             if [ -f "databases/$dbname/$tablename" ]; then
