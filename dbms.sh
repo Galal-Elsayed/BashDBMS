@@ -98,22 +98,52 @@ while true; do
                             fi
                             ;;
                         6)
+                            
                             read -p "Enter table name: " tablename
-                            if [ -f "databases/$dbname/$tablename" ]; then
-                                read -p "Enter primary key value to delete: " pk_value
-                                # Logic to delete row by PK (simplified)
-                                echo "Row with PK '$pk_value' deleted from '$tablename'."
+                            filepath="databases/$dbname/$tablename"
+                            if [ -f "$filepath" ]; then
+                                pk=$(sed -n '3p' "$filepath")
+                                IFS=',' read -ra columns <<< "$(sed -n '1p' "$filepath")"
+                                pk_index=-1
+                                for i in "${!columns[@]}"; do
+                                    if [[ "${columns[$i]}" == "$pk" ]]; then
+                                        pk_index=$((i + 1))
+                                        break
+                                    fi
+                                done
+                                if [[ $pk_index -eq -1 ]]; then
+                                    echo "Primary key column not found."
+                                else
+                                    read -p "Enter primary key value to delete: " pk_value
+                                    awk -F, -v pk_index="$pk_index" -v pk_value="$pk_value" 'NR<=3 || $pk_index != pk_value' "$filepath" > tmp && mv tmp "$filepath"
+                                    echo "Row with PK '$pk_value' deleted from '$tablename'."
+                                fi
                             else
                                 echo "Table '$tablename' does not exist."
                             fi
                             ;;
+
                         7)
                             read -p "Enter table name: " tablename
-                            if [ -f "databases/$dbname/$tablename" ]; then
-                                read -p "Enter primary key value to update: " pk_value
-                                read -p "Enter new values (comma-separated): " new_values
-                                # Logic to update row by PK (simplified)
-                                echo "Row with PK '$pk_value' updated in '$tablename'."
+                            filepath="databases/$dbname/$tablename"
+                            if [ -f "$filepath" ]; then
+                                pk=$(sed -n '3p' "$filepath")
+                                IFS=',' read -ra columns <<< "$(sed -n '1p' "$filepath")"
+                                pk_index=-1
+                                for i in "${!columns[@]}"; do
+                                    if [[ "${columns[$i]}" == "$pk" ]]; then
+                                        pk_index=$((i + 1))
+                                        break
+                                    fi
+                                done
+                                if [[ $pk_index -eq -1 ]]; then
+                                    echo "Primary key column not found."
+                                else
+                                    read -p "Enter primary key value to update: " pk_value
+                                    read -p "Enter new values (comma-separated): " new_values
+                                    awk -F, -v pk_index="$pk_index" -v pk_value="$pk_value" -v new_values="$new_values" 'NR<=3 {print; next} $pk_index == pk_value {$0=new_values} {print}' "$filepath" > tmp && mv tmp "$filepath"
+                                    echo "Row with PK '$pk_value' updated in '$tablename'."
+                                fi
                             else
                                 echo "Table '$tablename' does not exist."
                             fi
